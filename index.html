@@ -12,9 +12,15 @@
 <script>"use strict";
 
 window.onload = function() {
-	var url = "http://taisukef.github.io/SPARQLKnocker/sparqlgov.csv";
+//	var url = "http://taisukef.github.io/SPARQLKnocker/sparqlgov.csv";
+	var endpoints = [
+//		"http://lov.okfn.org/dataset/lov/sparql",
+//		"http://db.lodc.jp/sparql",
+		"http://sparql.odp.jig.jp/api/v1/sparql",
+	];
 
-	getCSV(url, "utf-8", function(data) {
+//	getCSV(url, "utf-8", function(data) {
+	{
 //		dump(data);
 		var makeDiv = function(name, param, onclick) {
 			var div = create("div");
@@ -42,26 +48,38 @@ window.onload = function() {
 		};
 		var c = get("content");
 		var link = function(s) {
+			var res = "";
 			if (s.startsWith("http://") || s.startsWith("https://")) {
-				return "<a href=" + s + " target=_blank>" + s + "</a>";
+				res += "<a href=" + s + " target=_blank>" + s + "</a>";
+			} else {
+				res += s;
 			}
-			return s;
+			if (s.endsWith(".jpg")) {
+				res += "<br><img src=" + s + " width=50%>";
+			}
+			return res;
 		};
 		var src = get("sparql");
-		for (var i = data.length - 1; i >= 1; i--) {
+//		for (var i = data.length - 1; i >= 1; i--) {
+		for (var i = 0; i < endpoints.length; i++) {
+			/*
 			var d = data[i];
 			var name = d[0] + " / " + d[1];
 			var url = d[2];
 			var lat = d[3];
 			var long = d[4];
 			var endpoint = d[5];
+			*/
+			var endpoint = endpoints[0];
+			var name = endpoint;
+			var url = endpoint;
 			
 			var span = create("a");
-			span.href = d[2];
+			span.href = url;
 			span.textContent = name;
 			src.appendChild(span);
 			span = create("span");
-			span.textContent = ", ";
+			span.textContent = " ";
 			src.appendChild(span);
 			
 			var showItemSparql = function(c, item, endpoint) {
@@ -69,7 +87,7 @@ window.onload = function() {
 				c.appendChild(tbl);
 				sparqlItemWithNode(item, endpoint, function(data) {
 					var po = data.results.bindings;
-					dump(po);
+//					dump(po);
 					for (var i = 0; i < po.length; i++) {
 						var poi = po[i];
 						var tr = create("tr");
@@ -130,7 +148,8 @@ window.onload = function() {
 			});
 			c.appendChild(div);
 		}
-	});
+	}
+//	});
 };
 var sparql = function(query, endpoint, callback) {
 	var suffix = "&output=json";
@@ -149,7 +168,7 @@ var sparqlTypes = function(endpoint, callback) {
 	sparql(query, endpoint, callback);
 };
 var sparqlItems10 = function(uri, endpoint, callback) {
-	var query = "select ?s { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + uri + ">. } limit 10";
+	var query = "select ?s { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + uri + ">. } order by rand() limit 10";
 	sparql(query, endpoint, callback);
 };
 var sparqlItem = function(uri, endpoint, callback) {
@@ -224,9 +243,14 @@ body {
 }
 #content {
 	text-align: left;
+	background: #f9f9f9;
+	cursor: pointer;
+	padding: 10px 0px;
 }
 #content div {
 	padding-left: 1em;
+	word-wrap:break-word;
+
 }
 #content table {
 	margin-left: 1em;
@@ -238,6 +262,9 @@ td {
 	border: 1px solid gray;
 	padding: 0px .5em;
 	x-max-width: 200px;
+	word-wrap: break-word;
+}
+th {
 	word-wrap: break-word;
 }
 #description {
@@ -277,18 +304,12 @@ a:active {
 
 <h1>SPARQL Knocker</h1>
 <div id="content"></div>
-<div id="description">
-<h2>Entry of SPARQL</h2><br>
-1. select distinct ?o { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o. } order by ?o<br>
-2. select ?s { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> < selected >. } limit 10<br>
-3. select * { < selected > ?p ?o. }<br>
-</div>
 
 <div class=credit>
-APP: CC BY <a href=http://fukuno.jig.jp/ target=_blank>Taisuke Fukuno / Create Every Day / 一日一創</a><br>
-DATA: <a href=sparqlgov.csv target=_blank>list of SPARQL government by Taisuke Fukuno / PUBLIC DOMAIN</a><br>
 SPARQL Endpoint: <span id=sparql></span><br>
-Related: <a href=http://fukuno.jig.jp/2014/sparqlgov.html target=_blank>Open Government SPARQL map</a><br>
+Vocaburaly: <a href=http://imi.ipa.go.jp/ns/core/Core22.html>(IMI) Core Vocabulary 2.20. This work is published from: Japan (標準語彙基盤コア語彙2.2)</a><br>
+<br>
+APP: CC BY <a href=http://fukuno.jig.jp/ target=_blank>Taisuke Fukuno / Create Every Day / 一日一創</a><br>
 SRC: GitHub <a href=https://github.com/taisukef/SPARQLKnocker>taisukef/SPARQLKnocker</a><br>
 </div>
 
