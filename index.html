@@ -87,7 +87,7 @@ window.onload = function() {
 				var tbl = create("table");
 				c.appendChild(tbl);
 				sparqlItemWithNode(item, endpoint, function(data) {
-					dump(data);
+//					dump(data);
 					var po = data.results.bindings;
 					for (var i = 0; i < po.length; i++) {
 						var poi = po[i];
