@@ -28,4 +28,5 @@ Web NDL Authorities,Japan,http://iss.ndl.go.jp/ndla/sparql/,35.678058, 139.74427
 Yokohama Art LOD Project,Japan,http://fp.yafjp.org/yokohama_art_lod,35.4656376,139.621782,http://archive.yafjp.org/test/inspection.php
 e-Stat,Japan,http://statdb.nstac.go.jp/system-info/api/api-spec/,35.700772,139.714796,http://statdb.nstac.go.jp/lod/sparql
 odp,Japan,http://sparql.odp.jig.jp/,35.95655,136.18447,http://sparql.odp.jig.jp/api/v1/sparql
-bodic,Japan,http://teapot.bodic.org/,33.590139, 130.401722,http://teapot-api.bodic.org/api/v1/sparql
+bodic,Japan,http://teapot.bodic.org/,33.590139,130.401722,http://teapot-api.bodic.org/api/v1/sparql
+osaka,Japan, http://data.osaka.lg.jp/,34.69375,135.502111,https://data.city.osaka.lg.jp/sparql

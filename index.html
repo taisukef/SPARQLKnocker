@@ -17,6 +17,7 @@ window.onload = function() {
 //		"http://lov.okfn.org/dataset/lov/sparql",
 //		"http://db.lodc.jp/sparql",
 		"http://sparql.odp.jig.jp/api/v1/sparql",
+		"https://data.city.osaka.lg.jp/sparql",
 	];
 
 //	getCSV(url, "utf-8", function(data) {
@@ -70,7 +71,7 @@ window.onload = function() {
 			var long = d[4];
 			var endpoint = d[5];
 			*/
-			var endpoint = endpoints[0];
+			var endpoint = endpoints[i];
 			var name = endpoint;
 			var url = endpoint;
 			
@@ -86,8 +87,8 @@ window.onload = function() {
 				var tbl = create("table");
 				c.appendChild(tbl);
 				sparqlItemWithNode(item, endpoint, function(data) {
+					dump(data);
 					var po = data.results.bindings;
-//					dump(po);
 					for (var i = 0; i < po.length; i++) {
 						var poi = po[i];
 						var tr = create("tr");
@@ -234,7 +235,6 @@ var getRawJSON = function(url, srcenc, callback) {
 	var url2 = base + "cnv=json&srcenc=" + srcenc + "&cache="  + cache + "&callback=" + getCallbackMethod(callback) + "&url=" + encodeURIComponent(url);
 	jsonp(url2);
 };
-
 </script>
 <style>
 body {
