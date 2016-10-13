@@ -177,7 +177,8 @@ var sparqlItem = function(uri, endpoint, callback) {
 	sparql(query, endpoint, callback);
 };
 var sparqlItemWithNode = function(uri, endpoint, callback) {
-	var query = "select * { <" + uri + "> ?p ?o. optional { ?o ?p2 ?o2. } }";
+	var query = "select * { <" + uri + "> ?p ?o. }";
+				//	var query = "select * { <" + uri + "> ?p ?o. optional { ?o ?p2 ?o2. } }";
 	sparql(query, endpoint, callback);
 };
 var makeTable = function(data, key) {
