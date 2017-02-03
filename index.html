@@ -16,14 +16,18 @@ window.onload = function() {
 	var endpoints = [
 //		"http://lov.okfn.org/dataset/lov/sparql",
 //		"http://db.lodc.jp/sparql",
-		"http://sparql.odp.jig.jp/api/v1/sparql",
+		"https://sparql.odp.jig.jp/api/v1/sparql",
 		"https://data.city.osaka.lg.jp/sparql",
+		"https://sparql.city.kyoto.lg.jp/sparql/",
+		"https://data.e-stat.go.jp/lod/sparql/query",
+		"http://nw-lod.nhk.jp/sparql"
 	];
+	// https://sparql.city.kyoto.lg.jp/sparql/?default-graph-uri=&query=SELECT+%3Fsubject+%3Fpredicate+%3Fobject+WHERE+%7B%3Fsubject+%3Fpredicate+%3Fobject%7D+ORDER+BY+DESC%28%3Fsubject%29+LIMIT+100&should-sponge=&format=text%2Fhtml&timeout=0&debug=on
 
 //	getCSV(url, "utf-8", function(data) {
 	{
 //		dump(data);
-		var makeDiv = function(name, param, onclick) {
+		var makeDiv = function(name, param, onclick, addhash) {
 			var div = create("div");
 			var div1 = create("div");
 			div1.textContent = name;
@@ -44,7 +48,18 @@ window.onload = function() {
 					this.div2.style.display = "block";
 					this.st = 1;
 				}
+				if (this.hash)
+					document.location.hash = this.hash;
 			};
+			/*
+			if (addhash) {
+				if (param instanceof Array) {
+					div1.hash = param[1] + "," + param[0];
+				} else {
+					div1.hash = param;
+				}
+			}
+			*/
 			return div;
 		};
 		var c = get("content");
@@ -132,7 +147,7 @@ window.onload = function() {
 										var c = this.parentElement.children[1];
 										var endpoint = this.param[1];
 										showItemSparql(c, this.param[0], endpoint);
-									});
+									}, false);
 									c.appendChild(div);
 								}
 								if (ids.length == 10) {
@@ -142,20 +157,26 @@ window.onload = function() {
 								}
 								c.appendChild(empty);
 							});
-						});
+						}, true);
 						c.appendChild(div);
 					}
 				});
-			});
+			}, true);
 			c.appendChild(div);
 		}
 	}
 //	});
 };
+
+/*
+https://sparql.city.kyoto.lg.jp/sparql/?default-graph-uri=&query=SELECT+%3Fsubject+%3Fpredicate+%3Fobject+WHERE+%7B%3Fsubject+%3Fpredicate+%3Fobject%7D+ORDER+BY+DESC%28%3Fsubject%29+LIMIT+100&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on
+*/
 var sparql = function(query, endpoint, callback) {
 	var suffix = "&output=json";
 	if (endpoint.startsWith("https://open-data.europa.eu/sparqlep"))
 		suffix = "&format=application%2Fsparql-results%2Bjson";
+	if (endpoint == "https://sparql.city.kyoto.lg.jp/sparql/?")
+		suffix = "&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on";
 	document.body.style.cursor = "wait";
 	var url = endpoint + "?query=" + encodeURIComponent(query) + suffix;
 	getJSON(url, function(data) {
@@ -177,8 +198,8 @@ var sparqlItem = function(uri, endpoint, callback) {
 	sparql(query, endpoint, callback);
 };
 var sparqlItemWithNode = function(uri, endpoint, callback) {
-	var query = "select * { <" + uri + "> ?p ?o. }";
-				//	var query = "select * { <" + uri + "> ?p ?o. optional { ?o ?p2 ?o2. } }";
+//	var query = "select * { <" + uri + "> ?p ?o. }";
+	var query = "select * { <" + uri + "> ?p ?o. optional { ?o ?p2 ?o2. } }";
 	sparql(query, endpoint, callback);
 };
 var makeTable = function(data, key) {
