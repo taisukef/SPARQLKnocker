@@ -1,0 +1,370 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/><!-- default / black / black-translucent -->
+<link rel="apple-touch-icon" href="circle-appicon.png"/>
+<meta name="format-detection" content="telephone=no"/>
+<title>class</title>
+<script src="fukuno.js"></script>
+<script>"use strict";
+
+// spring system
+/*
+Node - Edge - Node
+
+Edge
+	from
+	to
+	len
+	t // frames count
+	callback draw
+Node
+	x
+	y
+	ax
+	ay
+	fixed
+	t // frames count
+	callback draw
+	callback contains if use getHitNode
+
+
+*/
+// setting
+var POWER_SPRING = .01;
+var ATTENUATION = .1;
+var FPS = 60;
+
+var Edge = function(from, to, len) { // from, to (x, y, ax, ay, op:fixed)
+	this.from = from;
+	this.to = to;
+	this.len = len;
+	this.t = 0;
+	this.draw = function(g) {
+		g.setColor(200, 200, 200);
+		g.drawLine(this.from.x, this.from.y, this.to.x, this.to.y);
+	};
+};
+var Node = function(x, y, fixed) {
+	this.x = x;
+	this.y = y;
+	this.ax = 0;
+	this.ay = 0;
+	this.fixed = fixed;
+	this.t = 0;
+	this.r = 20;
+	this.draw = function(g) {
+		g.setColor(255, 255, 255);
+		g.fillCircle(this.x, this.y, this.r);
+		g.setColor(0, 0, 0);
+		g.drawCircle(this.x, this.y, this.r);
+	};
+	this.contains = function(x, y) {
+		var dx = x - this.x;
+		var dy = y - this.y;
+		return dx * dx + dy * dy < this.r * this.r;
+	};
+};
+
+// edge spring
+var edges = [];
+var addEdge = function(e) {
+	edges.push(e);
+	return e;
+};
+var removeEdge = function(from, to) {
+	if (to == null) {
+		for (var i = 0; i < edges.length; i++) {
+			var e = edges[i];
+			if (e.from == from || e.to == from) {
+				edges.remove(e);
+				break;
+			}
+		}
+	} else {
+		for (var i = 0; i < edges.length; i++) {
+			var e = edges[i];
+			if (e.from == from && e.to == to) {
+				edges.remove(e);
+				break;
+			}
+		}
+	}
+};
+var edgeJob = function() {
+	var nedges = edges.length;
+//		console.log(nedges);
+	for (var i = 0; i < nedges; i++) {
+		var e = edges[i];
+		var dx = e.to.x - e.from.x;
+		var dy = e.to.y - e.from.y;
+		var vlen = Math.sqrt(dx * dx + dy * dy);
+		/*
+		if (vlen > 300) { // 切れる // fixedはfrom固定
+			e.to.remove();
+			edges.splice(i, 1);
+			i--;
+			nedges--;
+			flg = true;
+			continue;
+		}
+		*/
+		var dlen = e.len - vlen;
+//			var dlen = -vlen;
+//			console.log(dlen);
+		var th = Math.atan2(dy, dx);
+		var dx = -dlen * Math.cos(th) * POWER_SPRING;
+		var dy = -dlen * Math.sin(th) * POWER_SPRING;
+		e.from.ax += dx;
+		e.from.ay += dy;
+		e.to.ax += -dx;
+		e.to.ay += -dy;
+	}
+};
+//
+var nodes = [];
+var addNode = function(n) {
+	nodes.push(n);
+	return n;
+};
+var removeNode = function(n) {
+	nodes.remove(n);
+};
+var nodeJob = function() {
+	var pow = 0.1;
+	var mindis = 100;
+	var mindis2 = mindis * mindis;
+	var nnodes = nodes.length;
+	for (var i = 0; i < nnodes; i++) {
+		var n1 = nodes[i];
+		if (n1.fixed)
+			continue;
+		
+		var ax = 0;
+		var ay = 0;
+		for (var j = 0; j < nnodes; j++) {
+			if (i == j)
+				continue;
+			var n2 = nodes[j];
+			var dx = n1.x - n2.x;
+			var dy = n1.y - n2.y;
+			var len2 = dx * dx + dy * dy;
+			if (len2 > mindis2)
+				continue;
+			var len = mindis - Math.sqrt(len2);
+			
+			var th = Math.atan2(dy, dx);
+			var dx2 = len * Math.cos(th) * pow;
+			var dy2 = len * Math.sin(th) * pow;
+			ax += dx2;
+			ay += dy2;
+		}
+		// 重力
+		/*
+		var gl = 30;
+		ax += Math.cos(-baseth2 - Math.PI / 2) * gl;
+		ay += Math.sin(-baseth2 - Math.PI / 2) * gl;
+		*/
+		n1.ax += ax;
+		n1.ay += ay;
+	}
+};
+var parts = [];
+var getHitNode = function(x, y) {
+	for (var i = 0; i < nodes.length; i++) {
+		if (nodes[i].contains(x, y))
+			return nodes[i];
+	}
+	return null;
+};
+var drawEdges = function(g) {
+	edgeJob();
+	nodeJob();
+	for (var i = 0; i < nodes.length; i++) {
+		var n = nodes[i];
+		if (!n.fixed) {
+			n.x += n.ax;
+			n.y += n.ay;
+			// 減衰
+			n.ax *= 1 - ATTENUATION;
+			n.ay *= 1 - ATTENUATION;
+		}
+	}
+	for (var i = 0; i < edges.length; i++) {
+		edges[i].draw(g);
+	}
+	for (var i = 0; i < nodes.length; i++) {
+		nodes[i].draw(g);
+	}
+};
+//
+
+window.onload = function() {
+	var g = getContext(canvas);
+	setUI(canvas);
+
+	g.draw = function() {
+		var sw = this.cw;
+		var sh = this.ch;
+		var ox = sw / 2;
+		var oy = sh / 2;
+		
+		g.setColor(255, 255, 255);
+		g.fillRect(0, 0, sw, sh);
+		g.setColor(0, 0, 0);
+		
+		drawEdges(g);
+	};
+
+	// ui
+	var ox = -1;
+	var oy = -1;
+	var cur = null;
+	var bkfixed;
+	var bkt;
+	canvas.onuidown = function(x, y) {
+		start();
+		cur = getHitNode(x, y);
+//		alert(cur);
+		if (cur == null)
+			return;
+		ox = x;
+		oy = y;
+		bkfixed = cur.fixed;
+		cur.fixed = true;
+		bkt = t;
+	};
+	canvas.onuimove = function(x, y) {
+		if (cur == null)
+			return;
+		var dx = x - ox;
+		var dy = y - oy;
+		ox = x;
+		oy = y;
+		cur.x += dx;
+		cur.y += dy;
+	};
+	canvas.onuiup = function() {
+		if (cur == null)
+			return;
+		cur.vx = cur.vy = cur.ax = cur.ay = 0;
+		cur.fixed = bkfixed;
+		var n = cur.nimg;
+		var nc = cur.ncc;
+		
+		if (t - bkt < 3) {
+			if (cur.onclick) {
+				cur.onclick();
+			}
+		}
+		cur = null;
+	};
+	
+	var setWindow = function() {
+		canvas.style.posWidth = window.innerWidth;
+		canvas.style.posHeight = window.innerHeight;
+		g.init();
+	};
+	window.onresize = setWindow;
+	setWindow();
+	
+	var tlastui = 0;
+	var tint;
+	var t = 0;
+	var interval = function() {
+		if (new Date().getTime() - tlastui > 60 * 1000) { // for save CPU
+			clearInterval(tint);
+			tint = null;
+			return;
+		}
+		g.draw();
+		t++;
+	};
+	var start = function() {
+		if (tint == null) {
+			tint = setInterval(interval, 1000 / FPS);
+		}
+		tlastui = new Date().getTime();
+	};
+	start();
+	
+	window.addEventListener("devicemotion", function(e) {
+		var xg = e.accelerationIncludingGravity.x; // 傾き
+		var yg = e.accelerationIncludingGravity.y;
+		var zg = e.accelerationIncludingGravity.z;
+	//	if (zg > -8)
+	//		baseth2 = Math.atan2(yg, xg) + Math.PI / 2;
+	}, true);
+	
+	main();
+};
+var main = function() {
+//	test1();
+	test2();
+};
+
+var test1 = function() {
+	var n1 = addNode(new Node(100, 100, true));
+	var n2 = addNode(new Node(200, 200));
+	var n3 = addNode(new Node(200, 210));
+	addEdge(new Edge(n1, n2, 30));
+	addEdge(new Edge(n1, n3, 30));
+};
+
+var test2 = function() {
+	var NodeS = function(s, fixed) {
+		Node.call(this, rnd(300), rnd(300), fixed);
+		this.s = s;
+		this.draw = function(g) {
+			g.setColor(255, 255, 255);
+			g.fillCircle(this.x, this.y, this.r);
+			g.setColor(0, 0, 0);
+			g.drawCircle(this.x, this.y, this.r);
+			
+			var sw = g.measureText(this.s).width;
+			g.textBaseline = "middle";
+			g.strokeText(this.s, this.x - sw / 2, this.y);
+		};
+	};
+	var NodeEndpoint = function(s) {
+		NodeS.call(this, s);
+		this.onclick = function() {
+//			alert(this.s);
+			var n = addNode(new NodeS("t"));
+			n.x = this.x;
+			n.y = this.y;
+			addEdge(new Edge(this, n, 30));
+		};
+	};
+	var n1 = addNode(new NodeS("SPARQL", true));
+	var n2 = addNode(new NodeEndpoint("odp"));
+	addEdge(new Edge(n1, n2, 30));
+	var n3 = addNode(new NodeEndpoint("Kyoto"));
+	addEdge(new Edge(n1, n3, 30));
+	var n4 = addNode(new NodeEndpoint("Osaka"));
+	addEdge(new Edge(n1, n4, 30));
+};
+
+
+</script>
+<style>
+body {
+	margin: 0px;
+	text-align: center;
+}
+#canvas {
+	display: block;
+	width: 100%;
+	height: 600px;
+	cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="main">
+<canvas id="canvas"></canvas>
+</div>
+
+</body>
+</html>
