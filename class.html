@@ -306,6 +306,7 @@ window.onload = function() {
 
 var sparqlTypes = function(endpoint, callback) {
 	var query = "select distinct ?o { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o. } order by ?o";
+//	var query = "select distinct ?o { ?s <http://www.w3.org/2000/01/rdf-schema#Class> ?o. } order by ?o";
 	querySPARQL(endpoint, query, callback);
 };
 
@@ -473,7 +474,7 @@ a {
 </div>
 
 <div class=links>
-links: <a href=index.html>SPARQL Knocker</a><br>
+links: <a href=http://taisukef.github.io/SPARQLKnocker/index.html>SPARQL Knocker</a><br>
 </div>
 
 <div class=credit>
