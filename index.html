@@ -9,10 +9,12 @@
 <meta name="format-detection" content="telephone=no"/>
 <head>
 <script src=fukuno.js></script>
+<script src="sparql.js"></script>
 <script>"use strict";
 
 window.onload = function() {
 //	var url = "http://taisukef.github.io/SPARQLKnocker/sparqlgov.csv";
+/*
 	var endpoints = [
 //		"http://lov.okfn.org/dataset/lov/sparql",
 //		"http://db.lodc.jp/sparql",
@@ -23,6 +25,8 @@ window.onload = function() {
 		"https://data.e-stat.go.jp/lod/sparql/query",
 //		"http://nw-lod.nhk.jp/sparql" // needs key
 	];
+	*/
+	var endpoints = SPARQL_ENDPOINT;
 	// https://sparql.city.kyoto.lg.jp/sparql/?default-graph-uri=&query=SELECT+%3Fsubject+%3Fpredicate+%3Fobject+WHERE+%7B%3Fsubject+%3Fpredicate+%3Fobject%7D+ORDER+BY+DESC%28%3Fsubject%29+LIMIT+100&should-sponge=&format=text%2Fhtml&timeout=0&debug=on
 
 //	getCSV(url, "utf-8", function(data) {
@@ -88,8 +92,8 @@ window.onload = function() {
 			var endpoint = d[5];
 			*/
 			var endpoint = endpoints[i];
-			var name = endpoint;
-			var url = endpoint;
+			var name = endpoint.baseurl;
+			var url = endpoint.baseurl;
 			
 			var span = create("a");
 			span.href = url;
@@ -172,6 +176,7 @@ window.onload = function() {
 /*
 https://sparql.city.kyoto.lg.jp/sparql/?default-graph-uri=&query=SELECT+%3Fsubject+%3Fpredicate+%3Fobject+WHERE+%7B%3Fsubject+%3Fpredicate+%3Fobject%7D+ORDER+BY+DESC%28%3Fsubject%29+LIMIT+100&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on
 */
+/*
 var sparql = function(query, endpoint, callback) {
 	var suffix = "&output=json";
 	if (endpoint.startsWith("https://open-data.europa.eu/sparqlep"))
@@ -186,22 +191,23 @@ var sparql = function(query, endpoint, callback) {
 	});
 //	prompt(url, query);
 };
+*/
 var sparqlTypes = function(endpoint, callback) {
 	var query = "select distinct ?o { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o. } order by ?o";
-	sparql(query, endpoint, callback);
+	querySPARQL(endpoint, query, callback);
 };
 var sparqlItems10 = function(uri, endpoint, callback) {
 	var query = "select ?s { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + uri + ">. } order by rand() limit 10";
-	sparql(query, endpoint, callback);
+	querySPARQL(endpoint, query, callback);
 };
 var sparqlItem = function(uri, endpoint, callback) {
 	var query = "select * { <" + uri + "> ?p ?o. }";
-	sparql(query, endpoint, callback);
+	querySPARQL(endpoint, query, callback);
 };
 var sparqlItemWithNode = function(uri, endpoint, callback) {
 //	var query = "select * { <" + uri + "> ?p ?o. }";
 	var query = "select * { <" + uri + "> ?p ?o. optional { ?o ?p2 ?o2. } }";
-	sparql(query, endpoint, callback);
+	querySPARQL(endpoint, query, callback);
 };
 var makeTable = function(data, key) {
 	if (key != null && key.length == 0)

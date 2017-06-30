@@ -8,6 +8,7 @@ var SPARQL_ENDPOINT = [
 	{ name: "Osaka", baseurl: "https://data.city.osaka.lg.jp/sparql", suffix: "&output=json", imi: "http://imi.ipa.go.jp/ns/core/rdf#" },
 	{ name: "Kyoto", baseurl: "https://sparql.city.kyoto.lg.jp/sparql/", suffix: "&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on", imi: "http://imi.go.jp/ns/core/rdf#" },
 	{ name: "Kobe", baseurl: "https://data.city.kobe.lg.jp/sparql", suffix: "&output=json", imi: "http://imi.go.jp/ns/core/rdf#" },
+	{ name: "Saitama", baseurl: "https://opendata.pref.saitama.lg.jp/sparql", suffix: "&output=json", imi: "http://imi.go.jp/ns/core/rdf#" },
 ];
 
 var querySPARQL = function(endpoint, q, callback) {
@@ -15,7 +16,7 @@ var querySPARQL = function(endpoint, q, callback) {
 	var url = endpoint.baseurl + "?query=" + encodeURIComponent(q) + endpoint.suffix;
 	url += "&callback=" + getCallbackMethod(callback);
 //	prompt(q);
-//	prompt(url);
+//	prompt("", url);
 	jsonp(url);
 };
 var queryItemSPARQL = function(endpoint, uri, callback) {

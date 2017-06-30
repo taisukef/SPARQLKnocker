@@ -322,13 +322,19 @@ var main = function() {
 		if (fixed)
 			this.r *= 1.5;
 		this.draw = function(g) {
-			if (fixed) {
+			if (this.bgcol) {
+				var c = this.bgcol;
+				g.setColor(c[0], c[1], c[2]);
+			} else if (fixed) {
 				g.setColor(0, 0, 0);
 			} else {
 				g.setColor(255, 255, 255);
 			}
 			g.fillCircle(this.x, this.y, this.r);
-			if (fixed) {
+			if (this.fgcol) {
+				var c = this.fgcol;
+				g.setColor(c[0], c[1], c[2]);
+			} else if (fixed) {
 				g.setColor(255, 255, 255);
 			} else {
 				g.setColor(0, 0, 0);
@@ -379,6 +385,7 @@ var main = function() {
 	};
 	var NodeEndpoint = function(endpoint) {
 		NodeS.call(this, endpoint.name);
+		this.bgcol = [ 210, 210, 210 ];
 		this.endpoint = endpoint;
 		this.onclick = function() {
 			if (this.opened)
