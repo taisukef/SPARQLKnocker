@@ -1,0 +1,353 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>SPARQL Knocker</title>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<link rel="apple-touch-icon" href="http://fukuno.jig.jp/2014/sparqlknocker.png"/>
+<meta property="og:image" content="http://fukuno.jig.jp/2014/sparqlknocker.png">
+<meta name="format-detection" content="telephone=no"/>
+<head>
+<script src=fukuno.js></script>
+<script src="sparql-opendatacc.js"></script>
+<script>"use strict";
+
+window.onload = function() {
+//	var url = "http://taisukef.github.io/SPARQLKnocker/sparqlgov.csv";
+/*
+	var endpoints = [
+//		"http://lov.okfn.org/dataset/lov/sparql",
+//		"http://db.lodc.jp/sparql",
+		"https://sparql.odp.jig.jp/api/v1/sparql",
+		"https://data.city.osaka.lg.jp/sparql",
+		"https://sparql.city.kyoto.lg.jp/sparql/",
+		"https://data.city.kobe.lg.jp/sparql",
+		"https://data.e-stat.go.jp/lod/sparql/query",
+//		"http://nw-lod.nhk.jp/sparql" // needs key
+	];
+	*/
+	var endpoints = SPARQL_ENDPOINT;
+	// https://sparql.city.kyoto.lg.jp/sparql/?default-graph-uri=&query=SELECT+%3Fsubject+%3Fpredicate+%3Fobject+WHERE+%7B%3Fsubject+%3Fpredicate+%3Fobject%7D+ORDER+BY+DESC%28%3Fsubject%29+LIMIT+100&should-sponge=&format=text%2Fhtml&timeout=0&debug=on
+
+//	getCSV(url, "utf-8", function(data) {
+	{
+//		dump(data);
+		var makeDiv = function(name, param, onclick, addhash) {
+			var div = create("div");
+			var div1 = create("div");
+			div1.textContent = name;
+			div.appendChild(div1);
+			var div2 = create("div");
+			div.appendChild(div2);
+			div1.param = param;
+			div1.div2 = div2;
+//			div1.style.cursor = "hand";
+			div1.onclick = function() {
+				if (!this.st) {
+					onclick.call(this);
+					this.st = 1;
+				} else if (this.st == 1) {
+					this.div2.style.display = "none";
+					this.st = 2;
+				} else if (this.st == 2) {
+					this.div2.style.display = "block";
+					this.st = 1;
+				}
+				if (this.hash)
+					document.location.hash = this.hash;
+			};
+			/*
+			if (addhash) {
+				if (param instanceof Array) {
+					div1.hash = param[1] + "," + param[0];
+				} else {
+					div1.hash = param;
+				}
+			}
+			*/
+			return div;
+		};
+		var c = get("content");
+		var link = function(s) {
+			var res = "";
+			if (s.startsWith("http://") || s.startsWith("https://")) {
+				res += "<a href=" + s + " target=_blank>" + s + "</a>";
+			} else {
+				res += s;
+			}
+			if (s.endsWith(".jpg")) {
+				res += "<br><img src=" + s + " width=50%>";
+			}
+			return res;
+		};
+		var src = get("sparql");
+//		for (var i = data.length - 1; i >= 1; i--) {
+		for (var i = 0; i < endpoints.length; i++) {
+			/*
+			var d = data[i];
+			var name = d[0] + " / " + d[1];
+			var url = d[2];
+			var lat = d[3];
+			var long = d[4];
+			var endpoint = d[5];
+			*/
+			var endpoint = endpoints[i];
+			var name = endpoint.baseurl;
+			var url = endpoint.baseurl;
+			
+			var span = create("a");
+			span.href = url;
+			span.textContent = name;
+			src.appendChild(span);
+			span = create("span");
+			span.textContent = " ";
+			src.appendChild(span);
+			
+			var showItemSparql = function(c, item, endpoint) {
+				var tbl = create("table");
+				c.appendChild(tbl);
+				sparqlItemWithNode(item, endpoint, function(data) {
+//					dump(data);
+					var po = data.results.bindings;
+					for (var i = 0; i < po.length; i++) {
+						var poi = po[i];
+						var tr = create("tr");
+						if (poi.o.type == "bnode") {
+							var th = create("td");
+							th.innerHTML = link(poi.p.value) + " &gt; " + link(poi.p2.value);
+							var td = create("td");
+							td.innerHTML = link(poi.o2.value);
+							tr.appendChild(th);
+							tr.appendChild(td);
+						} else {
+							var th = create("td");
+							th.innerHTML = link(poi.p.value);
+							var td = create("td");
+							td.innerHTML = link(poi.o.value);
+							tr.appendChild(th);
+							tr.appendChild(td);
+						}
+						tbl.appendChild(tr);
+					}
+				});
+			};
+			
+			var div = makeDiv(i + ". " + name, endpoint, function() {
+				var c = this.parentElement.children[1];
+				var endpoint = this.param;
+				sparqlTypes(endpoint, function(types) {
+					var items = types.results.bindings;
+					for (var i = 0; i < items.length; i++) {
+						var item = items[i];
+						var div = makeDiv(item.o.value, [ item.o.value, endpoint ], function() {
+							var c = this.parentElement.children[1];
+							var endpoint = this.param[1];
+							
+							showItemSparql(c, this.param[0], endpoint);
+							
+							sparqlItems10(this.param[0], endpoint, function(data) {
+								var ids = data.results.bindings;
+								for (var i = 0; i < ids.length && i < 9; i++) {
+									var div = makeDiv(ids[i].s.value, [ ids[i].s.value, endpoint ], function(data) {
+										var c = this.parentElement.children[1];
+										var endpoint = this.param[1];
+										showItemSparql(c, this.param[0], endpoint);
+									}, false);
+									c.appendChild(div);
+								}
+								if (ids.length == 10) {
+									var empty = create("div");
+									empty.style.paddingLeft = "2em";
+									empty.textContent = "...";
+								}
+								c.appendChild(empty);
+							});
+						}, true);
+						c.appendChild(div);
+					}
+				});
+			}, true);
+			c.appendChild(div);
+		}
+	}
+//	});
+};
+
+/*
+https://sparql.city.kyoto.lg.jp/sparql/?default-graph-uri=&query=SELECT+%3Fsubject+%3Fpredicate+%3Fobject+WHERE+%7B%3Fsubject+%3Fpredicate+%3Fobject%7D+ORDER+BY+DESC%28%3Fsubject%29+LIMIT+100&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on
+*/
+/*
+var sparql = function(query, endpoint, callback) {
+	var suffix = "&output=json";
+	if (endpoint.startsWith("https://open-data.europa.eu/sparqlep"))
+		suffix = "&format=application%2Fsparql-results%2Bjson";
+	if (endpoint == "https://sparql.city.kyoto.lg.jp/sparql/?")
+		suffix = "&should-sponge=&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on";
+	document.body.style.cursor = "wait";
+	var url = endpoint + "?query=" + encodeURIComponent(query) + suffix;
+	getJSON(url, function(data) {
+		document.body.style.cursor = "default";
+		callback(data);
+	});
+//	prompt(url, query);
+};
+*/
+var sparqlTypes = function(endpoint, callback) {
+	var query = "select distinct ?o { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o. } order by ?o";
+	querySPARQL(endpoint, query, callback);
+};
+var sparqlItems10 = function(uri, endpoint, callback) {
+	var query = "select ?s { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + uri + ">. } order by rand() limit 10";
+	querySPARQL(endpoint, query, callback);
+};
+var sparqlItem = function(uri, endpoint, callback) {
+	var query = "select * { <" + uri + "> ?p ?o. }";
+	querySPARQL(endpoint, query, callback);
+};
+var sparqlItemWithNode = function(uri, endpoint, callback) {
+//	var query = "select * { <" + uri + "> ?p ?o. }";
+	var query = "select * { <" + uri + "> ?p ?o. optional { ?o ?p2 ?o2. } }";
+	querySPARQL(endpoint, query, callback);
+};
+var makeTable = function(data, key) {
+	if (key != null && key.length == 0)
+		key = null;
+	var tbl = create("table");
+	for (var i = 0; i < data.length; i++) {
+		var tr = create("tr");
+		var hit = key == null;
+		for (var j = 0; j < data[i].length; j++) {
+			var td = create("td");
+			var s = data[i][j];
+			td.innerHTML = s;
+			tr.appendChild(td);
+			if (key !== null && !hit) {
+				hit = s.indexOf(key) >= 0;
+			}
+		}
+		if (i === 0 || hit)
+			tbl.appendChild(tr);
+	}
+	return tbl;
+};
+
+var convertCSVtoArray = function(s) {
+	var lines = s.split("\r\n");
+	var res = [];
+	for (var i = 0; i < lines.length; i++) {
+		if (lines[i].length > 0) {
+			var ar = lines[i].split(",");
+			res.push(ar);
+		}
+	}
+	return res;
+};
+var getCSV = function(url, srcenc, callback) {
+	getRawJSON(url, srcenc, function(data) {
+		var csv = convertCSVtoArray(data);
+		callback(csv);
+	});
+};
+var getJSON = function(url, callback) {
+	getRawJSON(url, "utf-8", function(data) {
+//	debug(data);
+		var json = JSON.parse(data);
+		callback(json);
+	});
+};
+var getRawJSON = function(url, srcenc, callback) {
+	var host = "sabae.club";
+	if (location.href.indexOf("localhost") >= 0 || location.href.indexOf("file:") >= 0)
+		host = "localhost:8080";
+	var cache = "no";
+	var base = "http://" + host + "/proxy/ITqT5WkhCf2yn1s9?";
+	var url2 = base + "cnv=json&srcenc=" + srcenc + "&cache="  + cache + "&callback=" + getCallbackMethod(callback) + "&url=" + encodeURIComponent(url);
+	jsonp(url2);
+};
+</script>
+<style>
+body {
+	text-align: center;
+	margin: 0px;
+}
+#content {
+	text-align: left;
+	background: #f9f9f9;
+	cursor: pointer;
+	padding: 10px 0px;
+}
+#content div {
+	padding-left: 1em;
+	word-wrap:break-word;
+
+}
+#content table {
+	margin-left: 1em;
+}
+table {
+	border-collapse: collapse;
+}
+td {
+	border: 1px solid gray;
+	padding: 0px .5em;
+	x-max-width: 200px;
+	word-wrap: break-word;
+}
+th {
+	word-wrap: break-word;
+}
+#description {
+	text-align: left;
+	padding: 20px;
+	margin: 20px 8px;
+	background: #efefef;
+}
+/* credit */
+.credit {
+	margin: 20px;
+	text-align: left;
+	font-weight: 80%;
+}
+.credit a {
+	color: gray !important;
+}
+#debug {
+	text-align: left;
+}
+a:link {
+	color: #888;
+}
+a:visited {
+	color: #aaa;
+}
+a:hover {
+	color: #a88;
+}
+a:active {
+	color: #88a;
+}
+.links {
+	text-align: left;
+	padding: 0.5em 20px;
+}
+</style>
+</head>
+<body>
+
+<h1>SPARQL Knocker</h1>
+<div id="content"></div>
+
+<div class=links>
+links: <a href=class.html>Visual SPARQL Knocker</a><br>
+</div>
+
+<div class=credit>
+SPARQL Endpoint: <span id=sparql></span><br>
+Vocaburaly: <a href=http://imi.go.jp/ns/core/Core232.html#>IMI Core Vocabulary 2.3.2</a> / <a href=http://imi.ipa.go.jp/ns/core/Core231.html#>IMI Core Vocabulary 2.3.1</a><br>
+<br>
+APP: CC BY <a href=http://fukuno.jig.jp/ target=_blank>Taisuke Fukuno / Create Every Day / 一日一創</a><br>
+SRC: GitHub <a href=https://github.com/taisukef/SPARQLKnocker>taisukef/SPARQLKnocker</a><br>
+</div>
+
+</body>
+</html>
